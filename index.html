@@ -86,43 +86,42 @@ function addDebug(msg) {
 }
 
 function getFeatureColor(feature, month) {
-    const has25 = feature.properties && feature.properties.BUFF_DIST === 25;
+    const buffDist = feature.properties ? feature.properties.BUFF_DIST : null;
     let color = '#95a5a6'; // default gray
     
-    addDebug('Feature BUFF_DIST: ' + feature.properties.BUFF_DIST + ', Month: ' + month);
-    
+    // Month-specific symbology based on BUFF_DIST (10 or 25)
     if (month === 3) {
-        color = has25 ? '#2ecc71' : '#f1c40f'; // green or yellow
+        color = buffDist === 25 ? '#2ecc71' : '#f1c40f'; // green for 25, yellow for 10
     } else if (month === 4) {
-        color = has25 ? '#f1c40f' : '#e74c3c'; // yellow or red
+        color = buffDist === 25 ? '#f1c40f' : '#e74c3c'; // yellow for 25, red for 10
     } else if (month === 5) {
-        color = has25 ? '#2ecc71' : '#f1c40f'; // green or yellow
+        color = buffDist === 25 ? '#2ecc71' : '#f1c40f'; // green for 25, yellow for 10
     }
     
-    addDebug('Assigned color: ' + color);
     return color;
 }
 
 function createStyledLayer(features, month) {
     addDebug('Creating layer with ' + features.length + ' features for month ' + month);
     
-    const layerGroup = L.layerGroup();
+    const geoJsonFeatureCollection = {
+        type: "FeatureCollection",
+        features: features
+    };
     
-    features.forEach(feature => {
-        const color = getFeatureColor(feature, month);
-        
-        const geoJsonLayer = L.geoJSON(feature, {
-            style: {
+    const layer = L.geoJSON(geoJsonFeatureCollection, {
+        style: function(feature) {
+            const color = getFeatureColor(feature, month);
+            return {
                 color: color,
                 weight: 2,
                 opacity: 0.8,
                 fill: true,
                 fillColor: color,
                 fillOpacity: 0.7
-            }
-        });
-        
-        geoJsonLayer.eachLayer(layer => {
+            };
+        },
+        onEachFeature: function(feature, layer) {
             if (feature.properties) {
                 let popup = '<div>';
                 Object.keys(feature.properties).forEach(key => {
@@ -131,12 +130,10 @@ function createStyledLayer(features, month) {
                 popup += '</div>';
                 layer.bindPopup(popup);
             }
-        });
-        
-        geoJsonLayer.addTo(layerGroup);
+        }
     });
     
-    return layerGroup;
+    return layer;
 }
 
 fetch('/HortusBotanicus/HortusBetula.json')
@@ -146,6 +143,11 @@ fetch('/HortusBotanicus/HortusBetula.json')
 })
 .then(data => {
     addDebug('✓ Data loaded: ' + data.features.length + ' features');
+    
+    // Log sample BUFF_DIST values
+    const buffDistValues = [...new Set(data.features.map(f => f.properties.BUFF_DIST))];
+    addDebug('BUFF_DIST values in data: ' + buffDistValues.join(', '));
+    
     allData = data;
 
     const periods = [
@@ -190,7 +192,11 @@ fetch('/HortusBotanicus/HortusBetula.json')
         currentLayer.addTo(map);
 
         if (currentLayer.getLayers().length > 0) {
-            map.fitBounds(currentLayer.getBounds());
+            try {
+                map.fitBounds(currentLayer.getBounds());
+            } catch (e) {
+                addDebug('Error fitting bounds: ' + e.message);
+            }
         }
     }
 
