@@ -28,6 +28,7 @@ html, body {
     padding: 10px;
     border-radius: 5px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    max-width: 400px;
 }
 
 #yearLabel {
@@ -38,7 +39,11 @@ html, body {
 #debug {
     font-size: 12px;
     margin-top: 10px;
-    max-width: 300px;
+    background: #f0f0f0;
+    padding: 5px;
+    border-radius: 3px;
+    max-height: 200px;
+    overflow-y: auto;
 }
 </style>
 </head>
@@ -68,46 +73,70 @@ L.tileLayer(
 
 let currentLayer;
 let allData;
+let debugLog = [];
 
-function getFeatureStyle(feature, month) {
-    let color = '#95a5a6'; // default gray
-    const has25 = feature.properties && feature.properties.BUFF_DIST === 25;
-    
-    console.log('Styling feature for month', month, '- BUFF_DIST:', feature.properties.BUFF_DIST, '- has25:', has25);
-    
-    // Month-specific symbology
-    if (month === 3) {
-        // Month 3: green when BUFF_DIST is 25, yellow if not
-        color = has25 ? '#2ecc71' : '#f1c40f';
-    } else if (month === 4) {
-        // Month 4: yellow when BUFF_DIST is 25, red if not
-        color = has25 ? '#f1c40f' : '#e74c3c';
-    } else if (month === 5) {
-        // Month 5: green when BUFF_DIST is 25, yellow if not
-        color = has25 ? '#2ecc71' : '#f1c40f';
+function addDebug(msg) {
+    console.log(msg);
+    debugLog.push(msg);
+    const debugDiv = document.getElementById('debug');
+    if (debugDiv) {
+        debugDiv.textContent = debugLog.slice(-10).join('\n');
+        debugDiv.scrollTop = debugDiv.scrollHeight;
     }
-    
-    console.log('Color assigned:', color);
-    
-    return {
-        color: color,
-        weight: 2,
-        opacity: 0.8,
-        fill: true,
-        fillColor: color,
-        fillOpacity: 0.7
-    };
 }
 
-function onEachFeature(feature, layer) {
-    if (feature.properties) {
-        let popup = '<div>';
-        Object.keys(feature.properties).forEach(key => {
-            popup += `<b>${key}:</b> ${feature.properties[key]}<br>`;
-        });
-        popup += '</div>';
-        layer.bindPopup(popup);
+function getFeatureColor(feature, month) {
+    const has25 = feature.properties && feature.properties.BUFF_DIST === 25;
+    let color = '#95a5a6'; // default gray
+    
+    addDebug('Feature BUFF_DIST: ' + feature.properties.BUFF_DIST + ', Month: ' + month);
+    
+    if (month === 3) {
+        color = has25 ? '#2ecc71' : '#f1c40f'; // green or yellow
+    } else if (month === 4) {
+        color = has25 ? '#f1c40f' : '#e74c3c'; // yellow or red
+    } else if (month === 5) {
+        color = has25 ? '#2ecc71' : '#f1c40f'; // green or yellow
     }
+    
+    addDebug('Assigned color: ' + color);
+    return color;
+}
+
+function createStyledLayer(features, month) {
+    addDebug('Creating layer with ' + features.length + ' features for month ' + month);
+    
+    const layerGroup = L.layerGroup();
+    
+    features.forEach(feature => {
+        const color = getFeatureColor(feature, month);
+        
+        const geoJsonLayer = L.geoJSON(feature, {
+            style: {
+                color: color,
+                weight: 2,
+                opacity: 0.8,
+                fill: true,
+                fillColor: color,
+                fillOpacity: 0.7
+            }
+        });
+        
+        geoJsonLayer.eachLayer(layer => {
+            if (feature.properties) {
+                let popup = '<div>';
+                Object.keys(feature.properties).forEach(key => {
+                    popup += `<b>${key}:</b> ${feature.properties[key]}<br>`;
+                });
+                popup += '</div>';
+                layer.bindPopup(popup);
+            }
+        });
+        
+        geoJsonLayer.addTo(layerGroup);
+    });
+    
+    return layerGroup;
 }
 
 fetch('/HortusBotanicus/HortusBetula.json')
@@ -116,7 +145,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
     return response.json();
 })
 .then(data => {
-    console.log('Data loaded:', data);
+    addDebug('✓ Data loaded: ' + data.features.length + ' features');
     allData = data;
 
     const periods = [
@@ -125,13 +154,12 @@ fetch('/HortusBotanicus/HortusBetula.json')
         )
     ].filter(v => v !== undefined && v !== null).sort();
 
-    console.log('Periods found:', periods);
+    addDebug('✓ Periods found: ' + periods.join(', '));
     
     const slider = document.getElementById('slider');
-    const debug = document.getElementById('debug');
 
     if (periods.length === 0) {
-        document.getElementById('yearLabel').textContent = "No data available";
+        addDebug('✗ No data available');
         slider.disabled = true;
         return;
     }
@@ -143,33 +171,23 @@ fetch('/HortusBotanicus/HortusBetula.json')
     slider.disabled = false;
 
     function updateMap(index) {
-        index = Number(index); // ensure numeric
+        index = Number(index);
         const selectedValue = periods[index];
 
-        document.getElementById('yearLabel').textContent =
-            "Month: " + selectedValue;
+        document.getElementById('yearLabel').textContent = "Month: " + selectedValue;
 
-        debug.textContent = "Month: " + selectedValue + " | Features: " + allData.features.filter(f => f.properties && f.properties.Maand == selectedValue).length;
+        const filteredFeatures = data.features.filter(
+            f => f.properties && f.properties.Maand == selectedValue
+        );
 
-        const filteredFeatures = {
-            type: "FeatureCollection",
-            features: data.features.filter(
-                f => f.properties && f.properties.Maand == selectedValue
-            )
-        };
-
-        console.log('Filtered features for month', selectedValue, ':', filteredFeatures.features.length);
+        addDebug('Month ' + selectedValue + ': ' + filteredFeatures.length + ' features');
 
         if (currentLayer) {
             map.removeLayer(currentLayer);
         }
 
-        currentLayer = L.geoJSON(filteredFeatures, {
-            style: function(feature) {
-                return getFeatureStyle(feature, selectedValue);
-            },
-            onEachFeature: onEachFeature
-        }).addTo(map);
+        currentLayer = createStyledLayer(filteredFeatures, selectedValue);
+        currentLayer.addTo(map);
 
         if (currentLayer.getLayers().length > 0) {
             map.fitBounds(currentLayer.getBounds());
@@ -184,9 +202,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
 
 })
 .catch(error => {
-    console.error("GeoJSON loading error:", error);
-    document.getElementById('yearLabel').textContent = "Error loading data (see console)";
-    document.getElementById('debug').textContent = error.message;
+    addDebug('✗ Error: ' + error.message);
 });
 
 </script>
