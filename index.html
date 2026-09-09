@@ -28,22 +28,11 @@ html, body {
     padding: 10px;
     border-radius: 5px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    max-width: 400px;
 }
 
 #yearLabel {
     font-weight: bold;
     margin-top: 5px;
-}
-
-#debug {
-    font-size: 12px;
-    margin-top: 10px;
-    background: #f0f0f0;
-    padding: 5px;
-    border-radius: 3px;
-    max-height: 200px;
-    overflow-y: auto;
 }
 </style>
 </head>
@@ -53,7 +42,6 @@ html, body {
 <div class="control-panel">
     <input type="range" id="slider">
     <div id="yearLabel"></div>
-    <div id="debug"></div>
 </div>
 
 <div id="map"></div>
@@ -72,18 +60,6 @@ L.tileLayer(
 ).addTo(map);
 
 let currentLayer;
-let allData;
-let debugLog = [];
-
-function addDebug(msg) {
-    console.log(msg);
-    debugLog.push(msg);
-    const debugDiv = document.getElementById('debug');
-    if (debugDiv) {
-        debugDiv.textContent = debugLog.slice(-10).join('\n');
-        debugDiv.scrollTop = debugDiv.scrollHeight;
-    }
-}
 
 function getFeatureColor(feature, month) {
     const buffDist = feature.properties ? feature.properties.BUFF_DIST : null;
@@ -102,8 +78,6 @@ function getFeatureColor(feature, month) {
 }
 
 function createStyledLayer(features, month) {
-    addDebug('Creating layer with ' + features.length + ' features for month ' + month);
-    
     const geoJsonFeatureCollection = {
         type: "FeatureCollection",
         features: features
@@ -142,26 +116,16 @@ fetch('/HortusBotanicus/HortusBetula.json')
     return response.json();
 })
 .then(data => {
-    addDebug('✓ Data loaded: ' + data.features.length + ' features');
-    
-    // Log sample BUFF_DIST values
-    const buffDistValues = [...new Set(data.features.map(f => f.properties.BUFF_DIST))];
-    addDebug('BUFF_DIST values in data: ' + buffDistValues.join(', '));
-    
-    allData = data;
-
     const periods = [
         ...new Set(
             data.features.map(f => f.properties && f.properties.Maand)
         )
     ].filter(v => v !== undefined && v !== null).sort();
-
-    addDebug('✓ Periods found: ' + periods.join(', '));
     
     const slider = document.getElementById('slider');
 
     if (periods.length === 0) {
-        addDebug('✗ No data available');
+        document.getElementById('yearLabel').textContent = "No data available";
         slider.disabled = true;
         return;
     }
@@ -182,8 +146,6 @@ fetch('/HortusBotanicus/HortusBetula.json')
             f => f.properties && f.properties.Maand == selectedValue
         );
 
-        addDebug('Month ' + selectedValue + ': ' + filteredFeatures.length + ' features');
-
         if (currentLayer) {
             map.removeLayer(currentLayer);
         }
@@ -195,7 +157,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
             try {
                 map.fitBounds(currentLayer.getBounds());
             } catch (e) {
-                addDebug('Error fitting bounds: ' + e.message);
+                console.error('Error fitting bounds:', e.message);
             }
         }
     }
@@ -208,7 +170,8 @@ fetch('/HortusBotanicus/HortusBetula.json')
 
 })
 .catch(error => {
-    addDebug('✗ Error: ' + error.message);
+    console.error("GeoJSON loading error:", error);
+    document.getElementById('yearLabel').textContent = "Error loading data";
 });
 
 </script>
