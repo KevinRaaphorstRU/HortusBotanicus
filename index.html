@@ -8,13 +8,15 @@
       href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
-html;
+html, body {
+    margin: 0;
+    padding: 0;
     height: 100%;
 }
 
 #map {
     width: 100%;
-    height: 100%;
+    height: 100vh;
 }
 
 .control-panel {
@@ -22,11 +24,9 @@ html;
     top: 10px;
     left: 50px;
     z-index: 1000;
-
     background: white;
     padding: 10px;
     border-radius: 5px;
-
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
@@ -46,29 +46,25 @@ html;
 
 <div id="map"></div>
 
-https://unpkg.com/leaflet/dist/leaflet.jsscript>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
 
-const map = L.map('map').setView([52.1, 5.2], 8);
+const map = .map('map').setView([52.1, 5.2], 8);
 
 L.tileLayer(
     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
-        attribution: '&copy; OpenStreetMap'
+        attribution: '&copy; OpenStreetMap contributors'
     }
 ).addTo(map);
 
-let geojsonData;
 let currentLayer;
 
 fetch('HortusBetula.geojson')
 .then(response => response.json())
 .then(data => {
 
-    geojsonData = data;
-
-    // Get unique values from attribute
     const periods = [
         ...new Set(
             data.features.map(f => f.properties.year)
@@ -81,11 +77,11 @@ fetch('HortusBetula.geojson')
     slider.max = periods.length - 1;
     slider.value = 0;
 
-    function updateMap(index){
+    function updateMap(index) {
 
         const selectedValue = periods[index];
 
-        document.getElementById('yearLabel').innerHTML =
+        document.getElementById('yearLabel').textContent =
             "Period: " + selectedValue;
 
         const filteredFeatures = {
@@ -95,46 +91,30 @@ fetch('HortusBetula.geojson')
             )
         };
 
-        if(currentLayer){
+        if (currentLayer) {
             map.removeLayer(currentLayer);
         }
 
-        currentLayer = L.geoJSON(filteredFeatures, {
+        currentLayer = L.geoJSON(filteredFeatures).addTo(map);
 
-            style: {
-                color: "#ff6600",
-                weight: 2,
-                fillOpacity: 0.5
-            },
-
-            onEachFeature: function(feature, layer){
-
-                let content = "";
-
-                for(const key in feature.properties){
-                    content +=
-                        "<b>" + key + "</b>: "
-                        + feature.properties[key]
-                        + "<br>";
-                }
-
-                layer.bindPopup(content);
-            }
-
-        }).addTo(map);
-
-        map.fitBounds(currentLayer.getBounds());
+        if (currentLayer.getLayers().length > 0) {
+            map.fitBounds(currentLayer.getBounds());
+        }
     }
 
     updateMap(0);
 
-    slider.addEventListener("input", function(){
+    slider.addEventListener("input", function() {
         updateMap(this.value);
     });
 
+})
+.catch(error => {
+    console.error("GeoJSON loading error:", error);
 });
 
 </script>
 
 </body>
 </html>
+``
