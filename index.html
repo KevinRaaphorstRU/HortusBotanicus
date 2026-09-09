@@ -70,7 +70,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
 
     const periods = [
         ...new Set(
-            data.features.map(f => f.properties && f.properties.year)
+            data.features.map(f => f.properties && f.properties.Maand)
         )
     ].filter(v => v !== undefined && v !== null).sort();
 
@@ -93,12 +93,12 @@ fetch('/HortusBotanicus/HortusBetula.json')
         const selectedValue = periods[index];
 
         document.getElementById('yearLabel').textContent =
-            "Period: " + selectedValue;
+            "Month: " + selectedValue;
 
         const filteredFeatures = {
             type: "FeatureCollection",
             features: data.features.filter(
-                f => f.properties && f.properties.year == selectedValue
+                f => f.properties && f.properties.Maand == selectedValue
             )
         };
 
