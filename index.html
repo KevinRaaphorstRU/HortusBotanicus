@@ -63,15 +63,18 @@ let currentLayer;
 
 function getFeatureStyle(feature, month) {
     let color = '#95a5a6'; // default gray
+    const hasName25 = feature.properties && feature.properties.name && String(feature.properties.name).includes('25');
     
-    // Month 4 (April): red
-    if (month === 4) {
-        color = '#e74c3c'; // Red
-    }
-    
-    // If name contains "25": yellow
-    if (feature.properties && feature.properties.name && String(feature.properties.name).includes('25')) {
-        color = '#f1c40f'; // Yellow
+    // Month-specific symbology
+    if (month === 3) {
+        // Month 3: green when name contains 25, yellow if not
+        color = hasName25 ? '#2ecc71' : '#f1c40f';
+    } else if (month === 4) {
+        // Month 4: yellow when name contains 25, red if not
+        color = hasName25 ? '#f1c40f' : '#e74c3c';
+    } else if (month === 5) {
+        // Month 5: green when name contains 25, yellow if not
+        color = hasName25 ? '#2ecc71' : '#f1c40f';
     }
     
     return {
