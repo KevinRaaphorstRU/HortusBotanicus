@@ -61,6 +61,53 @@ L.tileLayer(
 
 let currentLayer;
 
+function getFeatureStyle(feature, month) {
+    let color = '#95a5a6'; // default gray
+    
+    // Month 4 (April): red
+    if (month === 4) {
+        color = '#e74c3c'; // Red
+    }
+    
+    // If name contains "25": yellow
+    if (feature.properties && feature.properties.name && String(feature.properties.name).includes('25')) {
+        color = '#f1c40f'; // Yellow
+    }
+    
+    return {
+        color: color,
+        weight: 2,
+        opacity: 0.8,
+        fill: true,
+        fillColor: color,
+        fillOpacity: 0.7,
+        radius: 6
+    };
+}
+
+function pointToLayer(feature, latlng, month) {
+    const style = getFeatureStyle(feature, month);
+    return L.circleMarker(latlng, {
+        radius: style.radius,
+        fillColor: style.fillColor,
+        color: style.color,
+        weight: style.weight,
+        opacity: style.opacity,
+        fillOpacity: style.fillOpacity
+    });
+}
+
+function onEachFeature(feature, layer) {
+    if (feature.properties) {
+        let popup = '<div>';
+        Object.keys(feature.properties).forEach(key => {
+            popup += `<b>${key}:</b> ${feature.properties[key]}<br>`;
+        });
+        popup += '</div>';
+        layer.bindPopup(popup);
+    }
+}
+
 fetch('/HortusBotanicus/HortusBetula.json')
 .then(response => {
     if (!response.ok) throw new Error('Network response was not ok: ' + response.status);
@@ -106,7 +153,12 @@ fetch('/HortusBotanicus/HortusBetula.json')
             map.removeLayer(currentLayer);
         }
 
-        currentLayer = L.geoJSON(filteredFeatures).addTo(map);
+        currentLayer = L.geoJSON(filteredFeatures, {
+            pointToLayer: function(feature, latlng) {
+                return pointToLayer(feature, latlng, selectedValue);
+            },
+            onEachFeature: onEachFeature
+        }).addTo(map);
 
         if (currentLayer.getLayers().length > 0) {
             map.fitBounds(currentLayer.getBounds());
