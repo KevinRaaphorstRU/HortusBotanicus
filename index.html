@@ -34,6 +34,12 @@ html, body {
     font-weight: bold;
     margin-top: 5px;
 }
+
+#debug {
+    font-size: 12px;
+    margin-top: 10px;
+    max-width: 300px;
+}
 </style>
 </head>
 
@@ -42,6 +48,7 @@ html, body {
 <div class="control-panel">
     <input type="range" id="slider">
     <div id="yearLabel"></div>
+    <div id="debug"></div>
 </div>
 
 <div id="map"></div>
@@ -60,10 +67,13 @@ L.tileLayer(
 ).addTo(map);
 
 let currentLayer;
+let allData;
 
 function getFeatureStyle(feature, month) {
     let color = '#95a5a6'; // default gray
     const has25 = feature.properties && feature.properties.BUFF_DIST === 25;
+    
+    console.log('Styling feature for month', month, '- BUFF_DIST:', feature.properties.BUFF_DIST, '- has25:', has25);
     
     // Month-specific symbology
     if (month === 3) {
@@ -76,6 +86,8 @@ function getFeatureStyle(feature, month) {
         // Month 5: green when BUFF_DIST is 25, yellow if not
         color = has25 ? '#2ecc71' : '#f1c40f';
     }
+    
+    console.log('Color assigned:', color);
     
     return {
         color: color,
@@ -104,6 +116,8 @@ fetch('/HortusBotanicus/HortusBetula.json')
     return response.json();
 })
 .then(data => {
+    console.log('Data loaded:', data);
+    allData = data;
 
     const periods = [
         ...new Set(
@@ -111,7 +125,10 @@ fetch('/HortusBotanicus/HortusBetula.json')
         )
     ].filter(v => v !== undefined && v !== null).sort();
 
+    console.log('Periods found:', periods);
+    
     const slider = document.getElementById('slider');
+    const debug = document.getElementById('debug');
 
     if (periods.length === 0) {
         document.getElementById('yearLabel').textContent = "No data available";
@@ -132,12 +149,16 @@ fetch('/HortusBotanicus/HortusBetula.json')
         document.getElementById('yearLabel').textContent =
             "Month: " + selectedValue;
 
+        debug.textContent = "Month: " + selectedValue + " | Features: " + allData.features.filter(f => f.properties && f.properties.Maand == selectedValue).length;
+
         const filteredFeatures = {
             type: "FeatureCollection",
             features: data.features.filter(
                 f => f.properties && f.properties.Maand == selectedValue
             )
         };
+
+        console.log('Filtered features for month', selectedValue, ':', filteredFeatures.features.length);
 
         if (currentLayer) {
             map.removeLayer(currentLayer);
@@ -165,6 +186,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
 .catch(error => {
     console.error("GeoJSON loading error:", error);
     document.getElementById('yearLabel').textContent = "Error loading data (see console)";
+    document.getElementById('debug').textContent = error.message;
 });
 
 </script>
