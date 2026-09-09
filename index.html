@@ -61,7 +61,7 @@ L.tileLayer(
 
 let currentLayer;
 
-fetch('HortusBetula.json') // <-- updated filename
+fetch('/HortusBotanicus/HortusBetula.json')
 .then(response => {
     if (!response.ok) throw new Error('Network response was not ok: ' + response.status);
     return response.json();
