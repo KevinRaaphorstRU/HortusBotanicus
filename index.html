@@ -61,24 +61,35 @@ L.tileLayer(
 
 let currentLayer;
 
-fetch('HortusBetula.geojson')
-.then(response => response.json())
+fetch('HortusBetula.json') // <-- updated filename
+.then(response => {
+    if (!response.ok) throw new Error('Network response was not ok: ' + response.status);
+    return response.json();
+})
 .then(data => {
 
     const periods = [
         ...new Set(
-            data.features.map(f => f.properties.year)
+            data.features.map(f => f.properties && f.properties.year)
         )
-    ].sort();
+    ].filter(v => v !== undefined && v !== null).sort();
 
     const slider = document.getElementById('slider');
 
+    if (periods.length === 0) {
+        document.getElementById('yearLabel').textContent = "No data available";
+        slider.disabled = true;
+        return;
+    }
+
     slider.min = 0;
     slider.max = periods.length - 1;
+    slider.step = 1;
     slider.value = 0;
+    slider.disabled = false;
 
     function updateMap(index) {
-
+        index = Number(index); // ensure numeric
         const selectedValue = periods[index];
 
         document.getElementById('yearLabel').textContent =
@@ -87,7 +98,7 @@ fetch('HortusBetula.geojson')
         const filteredFeatures = {
             type: "FeatureCollection",
             features: data.features.filter(
-                f => f.properties.year == selectedValue
+                f => f.properties && f.properties.year == selectedValue
             )
         };
 
@@ -111,6 +122,7 @@ fetch('HortusBetula.geojson')
 })
 .catch(error => {
     console.error("GeoJSON loading error:", error);
+    document.getElementById('yearLabel').textContent = "Error loading data (see console)";
 });
 
 </script>
