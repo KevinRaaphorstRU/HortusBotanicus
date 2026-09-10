@@ -143,7 +143,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
         document.getElementById('yearLabel').textContent = "Maand: " + selectedValue;
 
         const filteredFeatures = data.features.filter(
-            f => f.properties && f.properties.Alias == selectedValue
+            f => f.properties && f.properties.Maand == selectedValue
         );
 
         if (currentLayer) {
