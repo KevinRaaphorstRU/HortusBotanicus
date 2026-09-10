@@ -140,10 +140,10 @@ fetch('/HortusBotanicus/HortusBetula.json')
         index = Number(index);
         const selectedValue = periods[index];
 
-        document.getElementById('yearLabel').textContent = "Alias: " + selectedValue;
+        document.getElementById('yearLabel').textContent = "Maand: " + selectedValue;
 
         const filteredFeatures = data.features.filter(
-            f => f.properties && f.properties.Maand == selectedValue
+            f => f.properties && f.properties.Alias == selectedValue
         );
 
         if (currentLayer) {
