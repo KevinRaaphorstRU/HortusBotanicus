@@ -34,13 +34,26 @@ html, body {
     font-weight: bold;
     margin-top: 5px;
 }
+
+#sliderLabels {
+    display: grid;
+    gap: 4px;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 4px;
+}
+
+#sliderLabels span {
+    white-space: nowrap;
+}
 </style>
 </head>
 
 <body>
 
 <div class="control-panel">
-    <input type="range" id="slider">
+    <input type="range" id="slider" aria-label="Maand">
+    <div id="sliderLabels"></div>
     <div id="yearLabel"></div>
 </div>
 
@@ -120,12 +133,39 @@ fetch('/HortusBotanicus/HortusBetula.json')
         ...new Set(
             data.features.map(f => f.properties && f.properties.Maand)
         )
-    ].filter(v => v !== undefined && v !== null).sort();
+    ].filter(v => v !== undefined && v !== null).sort((a, b) => {
+        const aNumber = Number(a);
+        const bNumber = Number(b);
+
+        if (!Number.isNaN(aNumber) && !Number.isNaN(bNumber)) {
+            return aNumber - bNumber;
+        }
+
+        return String(a).localeCompare(String(b), 'nl');
+    });
     
     const slider = document.getElementById('slider');
+    const sliderLabels = document.getElementById('sliderLabels');
+    const yearLabel = document.getElementById('yearLabel');
+    const monthNames = {
+        1: "Januari",
+        2: "Februari",
+        3: "Maart",
+        4: "April",
+        5: "Mei",
+        6: "Juni",
+        7: "Juli",
+        8: "Augustus",
+        9: "September",
+        10: "Oktober",
+        11: "November",
+        12: "December"
+    };
 
     if (periods.length === 0) {
-        document.getElementById('yearLabel').textContent = "No data available";
+        sliderLabels.replaceChildren();
+        yearLabel.textContent = "No data available";
+        slider.setAttribute('aria-valuetext', "No data available");
         slider.disabled = true;
         return;
     }
@@ -135,12 +175,20 @@ fetch('/HortusBotanicus/HortusBetula.json')
     slider.step = 1;
     slider.value = 0;
     slider.disabled = false;
+    sliderLabels.style.gridTemplateColumns = `repeat(${periods.length}, 1fr)`;
+    sliderLabels.replaceChildren(...periods.map(month => {
+        const label = document.createElement('span');
+        label.textContent = monthNames[Number(month)] || month;
+        return label;
+    }));
 
     function updateMap(index) {
         index = Number(index);
         const selectedValue = periods[index];
+        const monthLabel = monthNames[Number(selectedValue)] || selectedValue;
 
-        document.getElementById('yearLabel').textContent = "Maand: " + selectedValue;
+        yearLabel.textContent = "Maand: " + monthLabel;
+        slider.setAttribute('aria-valuetext', monthLabel);
 
         const filteredFeatures = data.features.filter(
             f => f.properties && f.properties.Maand == selectedValue
@@ -171,7 +219,11 @@ fetch('/HortusBotanicus/HortusBetula.json')
 })
 .catch(error => {
     console.error("GeoJSON loading error:", error);
+    const slider = document.getElementById('slider');
+    document.getElementById('sliderLabels').replaceChildren();
     document.getElementById('yearLabel').textContent = "Error loading data";
+    slider.disabled = true;
+    slider.setAttribute('aria-valuetext', "Error loading data");
 });
 
 </script>
