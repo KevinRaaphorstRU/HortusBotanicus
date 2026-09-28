@@ -52,7 +52,7 @@ html, body {
 <body>
 
 <div class="control-panel">
-    <input type="range" id="slider">
+    <input type="range" id="slider" aria-label="Maand">
     <div id="sliderLabels"></div>
     <div id="yearLabel"></div>
 </div>
@@ -133,7 +133,16 @@ fetch('/HortusBotanicus/HortusBetula.json')
         ...new Set(
             data.features.map(f => f.properties && f.properties.Maand)
         )
-    ].filter(v => v !== undefined && v !== null).sort();
+    ].filter(v => v !== undefined && v !== null).sort((a, b) => {
+        const aNumber = Number(a);
+        const bNumber = Number(b);
+
+        if (!Number.isNaN(aNumber) && !Number.isNaN(bNumber)) {
+            return aNumber - bNumber;
+        }
+
+        return String(a).localeCompare(String(b), 'nl');
+    });
     
     const slider = document.getElementById('slider');
     const sliderLabels = document.getElementById('sliderLabels');
@@ -156,6 +165,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
     if (periods.length === 0) {
         sliderLabels.innerHTML = "";
         yearLabel.textContent = "No data available";
+        slider.setAttribute('aria-valuetext', "No data available");
         slider.disabled = true;
         return;
     }
@@ -176,6 +186,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
         const monthLabel = monthNames[Number(selectedValue)] || selectedValue;
 
         yearLabel.textContent = "Maand: " + monthLabel;
+        slider.setAttribute('aria-valuetext', monthLabel);
 
         const filteredFeatures = data.features.filter(
             f => f.properties && f.properties.Maand == selectedValue
