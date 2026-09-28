@@ -163,7 +163,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
     };
 
     if (periods.length === 0) {
-        sliderLabels.innerHTML = "";
+        sliderLabels.replaceChildren();
         yearLabel.textContent = "No data available";
         slider.setAttribute('aria-valuetext', "No data available");
         slider.disabled = true;
@@ -176,9 +176,11 @@ fetch('/HortusBotanicus/HortusBetula.json')
     slider.value = 0;
     slider.disabled = false;
     sliderLabels.style.gridTemplateColumns = `repeat(${periods.length}, 1fr)`;
-    sliderLabels.innerHTML = periods.map(month => (
-        `<span>${monthNames[Number(month)] || month}</span>`
-    )).join('');
+    sliderLabels.replaceChildren(...periods.map(month => {
+        const label = document.createElement('span');
+        label.textContent = monthNames[Number(month)] || month;
+        return label;
+    }));
 
     function updateMap(index) {
         index = Number(index);
@@ -217,7 +219,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
 })
 .catch(error => {
     console.error("GeoJSON loading error:", error);
-    document.getElementById('sliderLabels').innerHTML = "";
+    document.getElementById('sliderLabels').replaceChildren();
     document.getElementById('yearLabel').textContent = "Error loading data";
 });
 
