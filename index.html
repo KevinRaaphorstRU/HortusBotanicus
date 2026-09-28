@@ -219,8 +219,11 @@ fetch('/HortusBotanicus/HortusBetula.json')
 })
 .catch(error => {
     console.error("GeoJSON loading error:", error);
+    const slider = document.getElementById('slider');
     document.getElementById('sliderLabels').replaceChildren();
     document.getElementById('yearLabel').textContent = "Error loading data";
+    slider.disabled = true;
+    slider.setAttribute('aria-valuetext', "Error loading data");
 });
 
 </script>
