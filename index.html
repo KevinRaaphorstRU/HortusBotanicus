@@ -32,7 +32,7 @@ html, body {
 
 #yearLabel {
     font-weight: bold;
-    margin-top: 5px;
+    margin-bottom: 6px;
 }
 
 #sliderLabels {
@@ -75,9 +75,9 @@ html, body {
 <body>
 
 <div class="control-panel">
+    <div id="yearLabel">Maand:</div>
     <input type="range" id="slider" aria-label="Maand">
     <div id="sliderLabels"></div>
-    <div id="yearLabel"></div>
 </div>
 
 <div id="map"></div>
@@ -202,7 +202,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
 
     if (periods.length === 0) {
         sliderLabels.replaceChildren();
-        yearLabel.textContent = "No data available";
+        yearLabel.textContent = "Maand:";
         slider.setAttribute('aria-valuetext', "No data available");
         slider.disabled = true;
         return;
@@ -225,7 +225,6 @@ fetch('/HortusBotanicus/HortusBetula.json')
         const selectedValue = periods[index];
         const monthLabel = monthNames[Number(selectedValue)] || selectedValue;
 
-        yearLabel.textContent = "Maand: " + monthLabel;
         slider.setAttribute('aria-valuetext', monthLabel);
 
         const filteredFeatures = data.features.filter(
@@ -259,7 +258,7 @@ fetch('/HortusBotanicus/HortusBetula.json')
     console.error("GeoJSON loading error:", error);
     const slider = document.getElementById('slider');
     document.getElementById('sliderLabels').replaceChildren();
-    document.getElementById('yearLabel').textContent = "Error loading data";
+    document.getElementById('yearLabel').textContent = "Maand:";
     slider.disabled = true;
     slider.setAttribute('aria-valuetext', "Error loading data");
 });
