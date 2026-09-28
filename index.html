@@ -46,6 +46,29 @@ html, body {
 #sliderLabels span {
     white-space: nowrap;
 }
+
+.info.legend {
+    background: white;
+    padding: 10px 12px;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.info.legend h4 {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+.legend-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    border: 1px solid #999;
+    vertical-align: middle;
+}
 </style>
 </head>
 
@@ -71,6 +94,21 @@ L.tileLayer(
         attribution: '&copy; OpenStreetMap contributors'
     }
 ).addTo(map);
+
+const legend = L.control({ position: 'bottomright' });
+
+legend.onAdd = function () {
+    const div = L.DomUtil.create('div', 'info legend');
+    div.innerHTML = `
+        <h4>Pollenrisico</h4>
+        <div><span class="legend-swatch" style="background:#2ecc71;"></span> laag</div>
+        <div><span class="legend-swatch" style="background:#f1c40f;"></span> gemiddeld</div>
+        <div><span class="legend-swatch" style="background:#e74c3c;"></span> hoog</div>
+    `;
+    return div;
+};
+
+legend.addTo(map);
 
 let currentLayer;
 
