@@ -162,9 +162,21 @@ function getFeatureOpacity(feature) {
 }
 
 function createStyledLayer(features, month) {
+    const visibleFeatures = features.filter(feature => {
+        const buffDist = feature.properties ? feature.properties.BUFF_DIST : null;
+        if (month === 3) {
+            return buffDist === 25 || buffDist === 10;
+        } else if (month === 4) {
+            return buffDist === 25 || buffDist === 10;
+        } else if (month === 5) {
+            return buffDist === 25 || buffDist === 10;
+        }
+        return false;
+    });
+
     const geoJsonFeatureCollection = {
         type: "FeatureCollection",
-        features: features
+        features: visibleFeatures
     };
     
     const layer = L.geoJSON(geoJsonFeatureCollection, {
