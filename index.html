@@ -93,6 +93,12 @@ html, body {
         <input type="checkbox" id="transparencyToggle">
         Risico voor bezoekers
     </label>
+    <div class="info legend" style="margin-top:10px;">
+        <h4>Pollenrisico</h4>
+        <div><span class="legend-swatch" style="background:#2ecc71;"></span> laag</div>
+        <div><span class="legend-swatch" style="background:#f1c40f;"></span> gemiddeld</div>
+        <div><span class="legend-swatch" style="background:#e74c3c;"></span> hoog</div>
+    </div>
 </div>
 
 <div id="map"></div>
@@ -109,21 +115,6 @@ L.tileLayer(
         attribution: '&copy; OpenStreetMap contributors'
     }
 ).addTo(map);
-
-const legend = L.control({ position: 'bottomright' });
-
-legend.onAdd = function () {
-    const div = L.DomUtil.create('div', 'info legend');
-    div.innerHTML = `
-        <h4>Pollenrisico</h4>
-        <div><span class="legend-swatch" style="background:#2ecc71;"></span> laag</div>
-        <div><span class="legend-swatch" style="background:#f1c40f;"></span> gemiddeld</div>
-        <div><span class="legend-swatch" style="background:#e74c3c;"></span> hoog</div>
-    `;
-    return div;
-};
-
-legend.addTo(map);
 
 let currentLayer;
 let useTransparency = false;
@@ -145,11 +136,11 @@ function getFeatureColor(feature, month) {
     
     // Month-specific symbology based on BUFF_DIST (10 or 25)
     if (month === 3) {
-        color = buffDist === 25 ? '#2ecc71' : '#f1c40f'; // green for 25, yellow for 10
+        color = buffDist === 25 ? '#2ecc71' : '#f1c40f';
     } else if (month === 4) {
-        color = buffDist === 25 ? '#f1c40f' : '#e74c3c'; // yellow for 25, red for 10
+        color = buffDist === 25 ? '#f1c40f' : '#e74c3c';
     } else if (month === 5) {
-        color = buffDist === 25 ? '#2ecc71' : '#f1c40f'; // green for 25, yellow for 10
+        color = buffDist === 25 ? '#2ecc71' : '#f1c40f';
     }
     
     return color;
@@ -293,7 +284,6 @@ fetch('/HortusBotanicus/HortusBetula2.json')
         }
     }
 
-    // Show the first month (matching the slider position), but zoom to the March extent
     updateMap(0, false);
 
     const marchValue = periods.find(month => Number(month) === 3);
