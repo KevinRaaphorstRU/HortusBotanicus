@@ -117,14 +117,15 @@ legend.addTo(map);
 let currentLayer;
 let useTransparency = false;
 
+// Opacity values: higher = more visible
 const origFidOpacity = {
-    0: 0.70,
+    0: 0.13,
     1: 1.00,
     2: 0.50,
     3: 0.50,
     4: 0.50,
     5: 0.50,
-    6: 0.13
+    6: 0.70
 };
 
 function getFeatureColor(feature, month) {
