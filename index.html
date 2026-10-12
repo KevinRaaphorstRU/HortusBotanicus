@@ -293,7 +293,8 @@ fetch('/HortusBotanicus/HortusBetula2.json')
         }
     }
 
-    updateMap(0);
+    const marchIndex = periods.findIndex(month => Number(month) === 3);
+    updateMap(marchIndex >= 0 ? marchIndex : 0);
 
     slider.addEventListener("input", function() {
         updateMap(this.value);
