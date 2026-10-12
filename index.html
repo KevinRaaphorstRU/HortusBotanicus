@@ -266,7 +266,7 @@ fetch('/HortusBotanicus/HortusBetula2.json')
         return label;
     }));
 
-    function updateMap(index) {
+    function updateMap(index, fit = true) {
         index = Number(index);
         const selectedValue = periods[index];
         const monthLabel = monthNames[Number(selectedValue)] || selectedValue;
@@ -284,7 +284,7 @@ fetch('/HortusBotanicus/HortusBetula2.json')
         currentLayer = createStyledLayer(filteredFeatures, selectedValue);
         currentLayer.addTo(map);
 
-        if (currentLayer.getLayers().length > 0) {
+        if (fit && currentLayer.getLayers().length > 0) {
             try {
                 map.fitBounds(currentLayer.getBounds());
             } catch (e) {
@@ -293,8 +293,30 @@ fetch('/HortusBotanicus/HortusBetula2.json')
         }
     }
 
-    const marchIndex = periods.findIndex(month => Number(month) === 3);
-    updateMap(marchIndex >= 0 ? marchIndex : 0);
+    // Show the first month (matching the slider position), but zoom to the March extent
+    updateMap(0, false);
+
+    const marchValue = periods.find(month => Number(month) === 3);
+    let initialBounds = null;
+    if (marchValue !== undefined) {
+        const marchLayer = createStyledLayer(
+            data.features.filter(f => f.properties && f.properties.Maand == marchValue),
+            Number(marchValue)
+        );
+        if (marchLayer.getLayers().length > 0) {
+            initialBounds = marchLayer.getBounds();
+        }
+    }
+    if (!initialBounds && currentLayer.getLayers().length > 0) {
+        initialBounds = currentLayer.getBounds();
+    }
+    if (initialBounds) {
+        try {
+            map.fitBounds(initialBounds);
+        } catch (e) {
+            console.error('Error fitting bounds:', e.message);
+        }
+    }
 
     slider.addEventListener("input", function() {
         updateMap(this.value);
